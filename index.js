@@ -73,8 +73,7 @@ function getResFromApi(startPrice, endPrince, backoffFact = 1) {
     try {
       const config = {
         method: "get",
-        // url: `https://api.ecommerce.com/products?minPrice=${startPrice}&maxPrice=${endPrince}`, //This is imaginary URL can replace original URL here
-        url: `http://localhost:3002/test-api?minPrice=${startPrice}&maxPrice=${endPrince}`, //This is imaginary URL can replace original URL here
+        url: `https://api.ecommerce.com/products?minPrice=${startPrice}&maxPrice=${endPrince}`, //This is imaginary URL can replace original URL here
         headers: {},
       };
       console.log(config);
