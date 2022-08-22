@@ -1,7 +1,8 @@
 /**
  * NOTE - Data from API will be sorted or not, I was not sure so created algo base on unsorted data so looping on
  * all data using price range query params. So all data can be extracted from website.
- * Used divide-and-conquer algorithm with little customization.
+ * Used divide-and-conquer algorithm with little customization. In here dataset is not provided so we don't have an idea if price 0-100 has more product
+ * than 5000-50000 So created a general algorithm which can handle both scenario.
  */
 const axios = require("axios");
 // This Function will get all data from website API
@@ -14,7 +15,7 @@ async function getALlDataFromWebsite() {
     let response = await getResFromApi(startPrice, endPrince);
     let products = [];
     //If website has 1000 or less total data than add that data to array.
-    if (response.total <= 1000) {
+    if (response.total <= 2) {
       products = products.concat(response.products);
     } else {
       //store total value
@@ -25,7 +26,7 @@ async function getALlDataFromWebsite() {
       while (products.length < total) {
         let apiRes = await getResFromApi(startPrice, endPrince);
         //If API has more than thousand data than divide that end price in half and continue till 1000 or less data found
-        if (apiRes.total <= 1000) {
+        if (apiRes.total <= 2) {
           //Hard copy of end price to set in start price
           let tempEnd = JSON.parse(JSON.stringify(endPrince));
           products = products.concat(apiRes.products);
@@ -50,21 +51,51 @@ async function getALlDataFromWebsite() {
         }
       }
     }
-    console.log("Total number of product extracted from website ", products.length);
+    console.log(
+      "Total number of product extracted from website ",
+      products.length
+    );
     return products;
   } catch (err) {
     console.log(err);
   }
 }
-//This is sub function to get data from API using axios package
-async function getResFromApi(startPrice, endPrince) {
-  const config = {
-    method: "get",
-    url: `https://api.ecommerce.com/products?minPrice=${startPrice}&maxPrice=${endPrince}`, //This is imaginary URL can replace original URL here
-    headers: {},
-  };
-  //This will return JSON data from API call
-  let response = await axios(config);
-  return response.data;
+/**
+ * This is sub function to get data from API using axios package, 
+ * Last params is to handle when server fail or throw error due to any reason then we will gradually slow down our request to server
+ * @param {number} startPrice 
+ * @param {number} endPrince 
+ * @param {number} backoffFact 
+ * @returns JSON
+ */
+function getResFromApi(startPrice, endPrince, backoffFact = 1) {
+  return new Promise(async function (resolve, reject) {
+    try {
+      const config = {
+        method: "get",
+        // url: `https://api.ecommerce.com/products?minPrice=${startPrice}&maxPrice=${endPrince}`, //This is imaginary URL can replace original URL here
+        url: `http://localhost:3002/test-api?minPrice=${startPrice}&maxPrice=${endPrince}`, //This is imaginary URL can replace original URL here
+        headers: {},
+      };
+      console.log(config);
+      //This will return JSON data from API call
+      let response = await axios(config);
+      resolve(response.data);
+    } catch (err) {
+      console.log(err);
+      /**
+       * We will wait in case of API server fail first for 1 second for second time for 2s and gradually increase wait till 10s than return error.
+       */
+      console.log(backoffFact)
+      let timeout = 1000 * backoffFact;
+      if (backoffFact >= 10) {
+       return reject(err);
+      }
+      setTimeout(async () => {
+        let responseJson = await getResFromApi(startPrice,endPrince, backoffFact + 1);
+        return resolve(responseJson)
+      }, timeout);
+    }
+  });
 }
 getALlDataFromWebsite();
