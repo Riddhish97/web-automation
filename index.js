@@ -15,7 +15,7 @@ async function getALlDataFromWebsite() {
     let response = await getResFromApi(startPrice, endPrince);
     let products = [];
     //If website has 1000 or less total data than add that data to array.
-    if (response.total <= 2) {
+    if (response.total <= 1000) {
       products = products.concat(response.products);
     } else {
       //store total value
@@ -26,7 +26,7 @@ async function getALlDataFromWebsite() {
       while (products.length < total) {
         let apiRes = await getResFromApi(startPrice, endPrince);
         //If API has more than thousand data than divide that end price in half and continue till 1000 or less data found
-        if (apiRes.total <= 2) {
+        if (apiRes.total <= 1000) {
           //Hard copy of end price to set in start price
           let tempEnd = JSON.parse(JSON.stringify(endPrince));
           products = products.concat(apiRes.products);
